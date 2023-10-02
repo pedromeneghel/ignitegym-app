@@ -14,7 +14,7 @@ import {
   useToast,
 } from "native-base";
 import { useState } from "react";
-import { Alert, TouchableOpacity } from "react-native";
+import { TouchableOpacity } from "react-native";
 
 const PHOTO_SIZE = 33;
 
