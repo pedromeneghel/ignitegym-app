@@ -4,7 +4,17 @@ import { Button } from "@components/Button";
 import { Input } from "@components/Input";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useNavigation } from "@react-navigation/native";
-import { Center, Heading, Image, ScrollView, Text, VStack } from "native-base";
+import { api } from "@services/api";
+import { AppError } from "@utils/AppError";
+import {
+  Center,
+  Heading,
+  Image,
+  ScrollView,
+  Text,
+  VStack,
+  useToast,
+} from "native-base";
 import { Controller, useForm } from "react-hook-form";
 import * as yup from "yup";
 
@@ -30,6 +40,7 @@ const signUpSchema = yup.object({
 
 export function SignUp() {
   const navigation = useNavigation();
+  const toast = useToast();
   const {
     control,
     formState: { errors },
@@ -38,8 +49,29 @@ export function SignUp() {
     resolver: yupResolver(signUpSchema),
   });
 
-  function handleSignUp(data: FormDataProps) {
-    console.log(data);
+  async function handleSignUp({ name, email, password }: FormDataProps) {
+    try {
+      await api.post("/users", { name, email, password });
+
+      toast.show({
+        title: "Conta criada com sucesso!",
+        placement: "top",
+        bgColor: "green.500",
+      });
+    } catch (error) {
+      const isAppError = error instanceof AppError;
+
+      if (isAppError) {
+        const title =
+          error.message || "Não foi possível criar a conta. Tente mais tarde";
+
+        toast.show({
+          title,
+          placement: "top",
+          bgColor: "red.500",
+        });
+      }
+    }
   }
 
   return (
@@ -76,6 +108,7 @@ export function SignUp() {
                 placeholder="Nome"
                 onChangeText={onChange}
                 value={value}
+                returnKeyType="next"
                 errorMessage={errors.name?.message}
               />
             )}
@@ -91,6 +124,7 @@ export function SignUp() {
                 autoCapitalize="none"
                 onChangeText={onChange}
                 value={value}
+                returnKeyType="next"
                 errorMessage={errors.email?.message}
               />
             )}
@@ -105,6 +139,7 @@ export function SignUp() {
                 secureTextEntry
                 onChangeText={onChange}
                 value={value}
+                returnKeyType="next"
                 errorMessage={errors.password?.message}
               />
             )}
