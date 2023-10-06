@@ -3,8 +3,10 @@ import LogoSvg from "@assets/logo.svg";
 import { Button } from "@components/Button";
 import { Input } from "@components/Input";
 import { yupResolver } from "@hookform/resolvers/yup";
+import { useAuth } from "@hooks/useAuth";
 import { useNavigation } from "@react-navigation/native";
 import { AuthNavigatorRoutesProps } from "@routes/auth.routes";
+import { AppError } from "@utils/AppError";
 import {
   Center,
   Heading,
@@ -14,6 +16,7 @@ import {
   VStack,
   useToast,
 } from "native-base";
+import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import * as yup from "yup";
 
@@ -29,6 +32,8 @@ const signUpSchema = yup.object({
 
 export function SignIn() {
   const navigation = useNavigation<AuthNavigatorRoutesProps>();
+  const { signIn } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
   const toast = useToast();
   const {
     control,
@@ -39,13 +44,24 @@ export function SignIn() {
   });
 
   async function handleSignIn({ email, password }: FormDataProps) {
-    console.log(email, password);
+    try {
+      setIsLoading(true);
+      await signIn(email, password);
+    } catch (error) {
+      const isAppError = error instanceof AppError;
 
-    toast.show({
-      title: "Submeteu o formulário!",
-      placement: "top",
-      bgColor: "green.500",
-    });
+      const title = isAppError
+        ? error.message
+        : "Não foi possível entrar. Tente novamente mais tarde";
+
+      toast.show({
+        title,
+        placement: "top",
+        bgColor: "red.500",
+      });
+
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -105,7 +121,11 @@ export function SignIn() {
             )}
           />
 
-          <Button title="Acessar" onPress={handleSubmit(handleSignIn)} />
+          <Button
+            isLoading={isLoading}
+            title="Acessar"
+            onPress={handleSubmit(handleSignIn)}
+          />
         </Center>
 
         <Center mt={24}>
