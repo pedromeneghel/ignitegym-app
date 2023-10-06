@@ -3,6 +3,7 @@ import LogoSvg from "@assets/logo.svg";
 import { Button } from "@components/Button";
 import { Input } from "@components/Input";
 import { yupResolver } from "@hookform/resolvers/yup";
+import { useAuth } from "@hooks/useAuth";
 import { useNavigation } from "@react-navigation/native";
 import { api } from "@services/api";
 import { AppError } from "@utils/AppError";
@@ -15,6 +16,7 @@ import {
   VStack,
   useToast,
 } from "native-base";
+import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import * as yup from "yup";
 
@@ -40,6 +42,8 @@ const signUpSchema = yup.object({
 
 export function SignUp() {
   const navigation = useNavigation();
+  const [isLoading, setIsLoading] = useState(false);
+  const { signIn } = useAuth();
   const toast = useToast();
   const {
     control,
@@ -51,14 +55,13 @@ export function SignUp() {
 
   async function handleSignUp({ name, email, password }: FormDataProps) {
     try {
+      setIsLoading(true);
       await api.post("/users", { name, email, password });
 
-      toast.show({
-        title: "Conta criada com sucesso!",
-        placement: "top",
-        bgColor: "green.500",
-      });
+      await signIn(email, password);
     } catch (error) {
+      setIsLoading(false);
+
       const isAppError = error instanceof AppError;
 
       if (isAppError) {
@@ -164,6 +167,7 @@ export function SignUp() {
           <Button
             title="Criar e acessar"
             onPress={handleSubmit(handleSignUp)}
+            isLoading={isLoading}
           />
         </Center>
 
